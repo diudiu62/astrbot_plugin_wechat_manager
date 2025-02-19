@@ -1,0 +1,42 @@
+{
+    "accept_friend_commands": {
+        "description": "微信好友审核关键词",
+        "hint": "只支持gewechat服务。",
+        "obvious_hint": true,
+        "type": "object",
+        "items": {
+            "keywords": {
+                "description": "关键词",
+                "type": "list",
+                "hint": "只支持gewechat服务，可设置多个关键词。"
+            },
+            "delay": {
+                "description": "延时发送时间（秒）",
+                "type": "int",
+                "hint": "预防风控，单位秒。"
+            }
+        }
+    },
+    "accept_friend_is_say": {
+        "description": "通过好友是否发送消息",
+        "type": "object",
+        "hint": "是否开启自动打招呼。",
+        "items": {
+            "switch": {
+                "description": "开关",
+                "type": "bool",
+                "hint": "是否开启自动打招呼。"
+            },
+            "message": {
+                "description": "消息内容",
+                "type": "string",
+                "hint": "加好友后，自动打招呼的消息。"
+            },
+            "delay": {
+                "description": "延时发送时间（秒）",
+                "type": "int",
+                "hint": "预防风控，单位秒。"
+            }
+        }
+    }
+}
