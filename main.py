@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-17 10:10:26
-LastEditTime: 2025-02-19 15:09:23
+LastEditTime: 2025-02-19 15:45:17
 '''
 import asyncio
 import xml.etree.ElementTree as ET
@@ -12,7 +12,7 @@ from astrbot.api import logger
 from astrbot.core.platform.sources.gewechat.gewechat_event import GewechatPlatformEvent
 
 
-@register("accept_friend", "diudiu62", "好友审核", "1.0.0", "repo url")
+@register("accept_friend", "diudiu62", "好友审核", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
