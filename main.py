@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-17 10:10:26
-LastEditTime: 2025-02-19 15:45:17
+LastEditTime: 2025-02-26 09:22:49
 '''
 import asyncio
 import xml.etree.ElementTree as ET
@@ -59,7 +59,7 @@ class MyPlugin(Star):
                         
                         # 同意添加好友
                         try:
-                            delay = self.accept_friend_commands.get("delay", 0)
+                            delay = int(self.accept_friend_commands.get("delay", 0))
                             await asyncio.sleep(delay)  # 延时
                             await client.add_contacts(3, 3, v3, v4, remark)
                             logger.info(f"同意添加好友: {fromnickname}")
@@ -78,7 +78,7 @@ class MyPlugin(Star):
     async def send_welcome_message(self, client, to_username):
         """发送欢迎消息"""
         message = self.accept_friend_is_say.get("message", "🤖 很高兴认识你！🌹")
-        delay = self.accept_friend_is_say.get("delay", 0)
+        delay = int(self.accept_friend_is_say.get("delay", 0))
         await asyncio.sleep(delay)  # 延时
         logger.info(f"发送: {message}")
         await client.post_text(to_username, message)
