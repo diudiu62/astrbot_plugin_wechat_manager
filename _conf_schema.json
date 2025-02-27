@@ -14,6 +14,12 @@
                 "description": "延时发送时间（秒）",
                 "type": "int",
                 "hint": "预防风控，单位秒。"
+            },
+            "rename": {
+                "description": "好友重命名",
+                "type": "bool",
+                "hint": "按关键词重命名好友。如果关键词是：A，则重命名为“昵称_A”。",
+                "default": false
             }
         }
     },

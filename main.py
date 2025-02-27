@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-17 10:10:26
-LastEditTime: 2025-02-26 09:22:49
+LastEditTime: 2025-02-27 14:15:50
 '''
 import asyncio
 import xml.etree.ElementTree as ET
@@ -18,6 +18,7 @@ class MyPlugin(Star):
         super().__init__(context)
         self.accept_friend_commands = config.get("accept_friend_commands", {})
         self.accept_friend_is_say = config.get("accept_friend_is_say", {})
+        
 
     @platform_adapter_type(PlatformAdapterType.GEWECHAT)
     async def accept_friend(self, event: AstrMessageEvent):
@@ -63,7 +64,11 @@ class MyPlugin(Star):
                             await asyncio.sleep(delay)  # 延时
                             await client.add_contacts(3, 3, v3, v4, remark)
                             logger.info(f"同意添加好友: {fromnickname}")
-                        except Exception as e:
+                            if self.accept_friend_commands.get("rename", False):
+                                await asyncio.sleep(2)
+                                await client.set_friend_remark(fromusername, f"{fromnickname}_{keyword}")
+                                logger.info(f"修改好友备注: {fromnickname} -> {fromnickname}_{keyword}")
+                        except ExceptionGroup as e:
                             logger.error(f"添加好友失败: {e}")
                             return
 
