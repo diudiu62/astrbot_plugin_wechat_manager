@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-19 15:35:18
-LastEditTime: 2025-03-05 12:04:22
+LastEditTime: 2025-03-05 13:53:20
 '''
 import xml.etree.ElementTree as ET
 from astrbot.api.event import AstrMessageEvent
@@ -36,10 +36,11 @@ class MyPlugin(Star):
             message_type = event.message_obj.raw_message["MsgType"]
             if message_type == 37:
                 await self._handle_friend_request(event, friend_manager, group_manager)
+                event.stop_event()
             else:
                 await group_manager.handle_group_invitation(event)
 
-            event.stop_event()
+
 
     def _create_friend_manager(self, client) -> FriendManager:
         return FriendManager(
