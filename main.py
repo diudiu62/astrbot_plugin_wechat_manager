@@ -1,89 +1,73 @@
 '''
 Author: diudiu62
-Date: 2025-02-17 10:10:26
-LastEditTime: 2025-02-27 14:15:50
+Date: 2025-02-19 15:35:18
+LastEditTime: 2025-03-05 11:22:20
 '''
 import asyncio
 import xml.etree.ElementTree as ET
 from astrbot.api.event import AstrMessageEvent
-from astrbot.api.event.filter import platform_adapter_type, PlatformAdapterType
+from astrbot.api.event.filter import platform_adapter_type, command, PlatformAdapterType
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from astrbot.core.platform.sources.gewechat.gewechat_event import GewechatPlatformEvent
-
+from .friend_manager import FriendManager
+from .group_manager import GroupManager
 
 @register("accept_friend", "diudiu62", "好友审核", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
-        self.accept_friend_commands = config.get("accept_friend_commands", {})
-        self.accept_friend_is_say = config.get("accept_friend_is_say", {})
-        
+        self.config = config
+
+    @command("groupid")
+    async def get_group_id(self, event: AstrMessageEvent) -> None:
+        groupid = event.get_group_id().split('@')[0]
+        await event.plain_result(f"当前群ID：{groupid}")
+        event.stop_event()
 
     @platform_adapter_type(PlatformAdapterType.GEWECHAT)
-    async def accept_friend(self, event: AstrMessageEvent):
-        '''个人微信好友审核管理'''
+    async def accept_friend(self, event: AstrMessageEvent) -> None:
         if event.get_platform_name() == "gewechat":
-            if event.message_obj.raw_message["MsgType"] == 37:
-                logger.info("收到好友请求")
-                content_xml = event.message_obj.raw_message["Content"]["string"]
-                
-                # 尝试解析 XML
-                try:
-                    content_xml = ET.fromstring(content_xml)
-                    remark = content_xml.attrib.get('content')
-                    fromnickname = content_xml.attrib.get('fromnickname')
-                    fromusername = content_xml.attrib.get('fromusername')
-                    v3 = content_xml.attrib.get('encryptusername')
-                    v4 = content_xml.attrib.get('ticket')
-                except ET.ParseError as e:
-                    logger.error(f"解析好友请求内容时出错: {e}")
-                    return
-                    
-                logger.info("friend request content: {}".format(remark))
-                found_keyword = False
+            assert isinstance(event, GewechatPlatformEvent)
+            client = event.client
 
-                keywords = self.accept_friend_commands.get("keywords", [])
-                if not keywords:
-                    logger.warning("没有定义关键词，无法处理好友请求。")
-                    return
-                
-                for keyword in keywords:
-                    logger.debug(f"keyword: {keyword}")
-                    if keyword in remark:
-                        found_keyword = True
-                        await asyncio.sleep(3)  # 延时
+            friend_manager = self._create_friend_manager(client)
+            group_manager = self._create_group_manager(client)
 
-                        logger.info(f"{fromnickname} 通过验证！（{keyword}）")
-                        assert isinstance(event, GewechatPlatformEvent)
-                        client = event.client
-                        
-                        # 同意添加好友
-                        try:
-                            delay = int(self.accept_friend_commands.get("delay", 0))
-                            await asyncio.sleep(delay)  # 延时
-                            await client.add_contacts(3, 3, v3, v4, remark)
-                            logger.info(f"同意添加好友: {fromnickname}")
-                            if self.accept_friend_commands.get("rename", False):
-                                await asyncio.sleep(2)
-                                await client.set_friend_remark(fromusername, f"{fromnickname}_{keyword}")
-                                logger.info(f"修改好友备注: {fromnickname} -> {fromnickname}_{keyword}")
-                        except ExceptionGroup as e:
-                            logger.error(f"添加好友失败: {e}")
-                            return
+            message_type = event.message_obj.raw_message["MsgType"]
+            if message_type == 37:
+                await self._handle_friend_request(event, friend_manager, group_manager)
+            else:
+                await group_manager.handle_group_invitation(event)
 
-                        # 发送欢迎消息
-                        if self.accept_friend_is_say.get("switch", False):
-                            await self.send_welcome_message(client, fromusername)
-                        break
+            event.stop_event()
 
-                if not found_keyword:
-                    logger.info(f"{fromnickname} 好友请求待审核。")
+    def _create_friend_manager(self, client) -> FriendManager:
+        return FriendManager(
+            client,
+            self.config.get("accept_friend_config", {}),
+            self.config.get("group_invitation_config", [])
+        )
 
-    async def send_welcome_message(self, client, to_username):
-        """发送欢迎消息"""
-        message = self.accept_friend_is_say.get("message", "🤖 很高兴认识你！🌹")
-        delay = int(self.accept_friend_is_say.get("delay", 0))
-        await asyncio.sleep(delay)  # 延时
-        logger.info(f"发送: {message}")
-        await client.post_text(to_username, message)
+    def _create_group_manager(self, client) -> GroupManager:
+        return GroupManager(
+            client,
+            self.config.get("group_invitation_config", [])
+        )
+
+    async def _handle_friend_request(self, event: AstrMessageEvent, friend_manager: FriendManager, group_manager: GroupManager) -> None:
+        content_xml = event.message_obj.raw_message.get("Content", {}).get("string", "")
+
+        try:
+            content_xml = ET.fromstring(content_xml)
+            remark = content_xml.attrib.get('content')
+            fromnickname = content_xml.attrib.get('fromnickname')
+            fromusername = content_xml.attrib.get('fromusername')
+            v3 = content_xml.attrib.get('encryptusername')
+            v4 = content_xml.attrib.get('ticket')
+
+            data, result, userinfo = await friend_manager.accept_friend_request(v3, v4, remark, fromnickname, fromusername)
+            if data == "group_invite" and result:
+                await group_manager.accept_friend_group_invitation(userinfo['keyword'], userinfo['wxid'], userinfo['nickname'])
+        except ET.ParseError as e:
+            logger.error(f"Error parsing friend request content: {e}")

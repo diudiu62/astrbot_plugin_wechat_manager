@@ -1,5 +1,5 @@
 {
-    "accept_friend_commands": {
+    "accept_friend_config": {
         "description": "微信好友审核关键词",
         "hint": "只支持gewechat服务。",
         "obvious_hint": true,
@@ -10,38 +10,70 @@
                 "type": "list",
                 "hint": "只支持gewechat服务，可设置多个关键词。"
             },
-            "delay": {
-                "description": "延时发送时间（秒）",
+            "accept_friend_delay": {
+                "description": "延时审核添加好友（3秒）",
                 "type": "int",
-                "hint": "预防风控，单位秒。"
+                "hint": "预防风控，单位秒。",
+                "default": 3
             },
             "rename": {
                 "description": "好友重命名",
                 "type": "bool",
                 "hint": "按关键词重命名好友。如果关键词是：A，则重命名为“昵称_A”。",
                 "default": false
+            },
+            "accept_friend_say_message": {
+                "description": "欢迎好友消息内容",
+                "type": "string",
+                "hint": "加好友后，自动打招呼的消息。"
+            },
+            "accept_friend_say_message_delay": {
+                "description": "延时发送欢迎消息时间（3秒）",
+                "type": "int",
+                "hint": "预防风控，单位秒。",
+                "default": 3
+            },
+            "keywords_group_invitation": {
+                "description": "自动邀请入群。",
+                "type": "bool",
+                "hint": "如果申请好友备注文本含有入群关键词，则自动邀请入群。"
             }
         }
     },
-    "accept_friend_is_say": {
-        "description": "通过好友是否发送消息",
+    "group_invitation_config": {
+        "description": "邀请入群配置",
+        "hint": "只支持gewechat服务。",
+        "obvious_hint": true,
         "type": "object",
-        "hint": "是否开启自动打招呼。",
         "items": {
             "switch": {
                 "description": "开关",
                 "type": "bool",
-                "hint": "是否开启自动打招呼。"
+                "hint": "是否开启邀请入群。"
             },
-            "message": {
-                "description": "消息内容",
-                "type": "string",
-                "hint": "加好友后，自动打招呼的消息。"
+            "keywords": {
+                "description": "关键词",
+                "type": "list",
+                "hint": "用“#”分隔关键词和群ID，例：ai#47538791791，群ID可以在所在群发送”/groupid“指令获得。",
+                "obvious_hint": true
             },
-            "delay": {
-                "description": "延时发送时间（秒）",
+            "group_invitation_delay": {
+                "description": "延时邀请入群（秒）",
                 "type": "int",
-                "hint": "预防风控，单位秒。"
+                "hint": "预防风控，单位秒。",
+                "default": 3
+            },
+            "group_welcome_msg": {
+                "description": "欢迎语",
+                "type": "string",
+                "hint": "入群欢迎语，空白则系统随机发送。",
+                "default": "欢迎新人入群！"
+            },
+            "group_welcome_msg_delay": {
+                "description": "延时发送群欢迎语（秒）",
+                "type": "int",
+                "hint": "预防风控，单位秒。",
+                "default": 3
             }
         }
     }
