@@ -1,9 +1,8 @@
 '''
 Author: diudiu62
 Date: 2025-02-19 15:35:18
-LastEditTime: 2025-03-05 11:22:20
+LastEditTime: 2025-03-05 12:04:22
 '''
-import asyncio
 import xml.etree.ElementTree as ET
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.event.filter import platform_adapter_type, command, PlatformAdapterType
@@ -13,7 +12,7 @@ from astrbot.core.platform.sources.gewechat.gewechat_event import GewechatPlatfo
 from .friend_manager import FriendManager
 from .group_manager import GroupManager
 
-@register("accept_friend", "diudiu62", "好友审核", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
+@register("accept_friend", "diudiu62", "好友审核&邀请进群", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
