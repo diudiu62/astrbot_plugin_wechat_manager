@@ -42,8 +42,9 @@ class GroupManager:
 
         if not await self.is_user_in_group(wxid, users_list["data"]["memberList"]):
             logger.info("用户不在群中，正在邀请……")
-            await self.client.invite_member(wxid, group_id_with_chatroom, "")
-            await self.send_group_welcome_message(wxid, nickname, group_id_with_chatroom)
+            result = await self.client.invite_member(wxid, group_id_with_chatroom, "")
+            if result['ret'] == 200:
+                await self.send_group_welcome_message(wxid, nickname, group_id_with_chatroom)
         else:
             logger.info(f"【{nickname}】已经在群【{group_id_with_chatroom}】中。")
 
