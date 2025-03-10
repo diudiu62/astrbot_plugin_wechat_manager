@@ -5,6 +5,7 @@ LastEditTime: 2025-03-05 11:55:21
 '''
 from astrbot.api import logger
 import asyncio
+
 from typing import Dict, List, Any
 
 class GroupManager:
@@ -22,6 +23,7 @@ class GroupManager:
             for item, group_id in keys_values.items():
                 if event.message_str == item:
                     await self.invite_to_group(event.get_sender_id(), group_id, nickname)
+                    event.stop_event()
                     break
 
     async def accept_friend_group_invitation(self, keyword: str, wxid: str, nickname: str) -> None:
@@ -42,9 +44,7 @@ class GroupManager:
 
         if not await self.is_user_in_group(wxid, users_list["data"]["memberList"]):
             logger.info("用户不在群中，正在邀请……")
-            result = await self.client.invite_member(wxid, group_id_with_chatroom, "")
-            if result['ret'] == 200:
-                await self.send_group_welcome_message(wxid, nickname, group_id_with_chatroom)
+            await self.client.invite_member(wxid, group_id_with_chatroom, "")   
         else:
             logger.info(f"【{nickname}】已经在群【{group_id_with_chatroom}】中。")
 
@@ -56,10 +56,3 @@ class GroupManager:
     async def is_user_in_group(self, wxid: str, member_list: List[Dict[str, str]]) -> bool:
         return any(member["wxid"] == wxid for member in member_list)
 
-    async def send_group_welcome_message(self, wxid: str, nickname: str, group_id: str) -> None:
-        welcome_msg = self.config.get("group_welcome_msg", "")
-        if welcome_msg:
-            delay = int(self.config.get("group_welcome_msg_delay", 0))
-            await asyncio.sleep(delay)
-            await self.client.post_text(group_id, f'@{nickname} {welcome_msg}', wxid)
-            logger.info(f"发送入群欢迎消息: {welcome_msg}")

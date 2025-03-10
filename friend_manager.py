@@ -5,6 +5,7 @@ LastEditTime: 2025-03-05 11:49:44
 '''
 import asyncio
 from astrbot.api import logger
+from .send_welcome_message import SendMessage
 
 class FriendManager:
     def __init__(self, client, accept_friend_config: dict, group_invitation_config: dict):
@@ -18,6 +19,7 @@ class FriendManager:
         self.client = client
         self.accept_friend_config = accept_friend_config
         self.group_invitation_config = group_invitation_config
+        self.send_message = SendMessage(group_invitation_config)
 
     async def accept_friend_request(self, v3: str, v4: str, remark: str, 
                                      fromnickname: str, fromusername: str) -> tuple:
@@ -64,15 +66,16 @@ class FriendManager:
         await asyncio.sleep(delay)
         await self.client.add_contacts(3, 3, v3, v4, remark)
         logger.info(f"Friend added: {fromnickname}")
+        await asyncio.sleep(2)
 
         if self.accept_friend_config.get("rename", False):
             await self.rename_friend(fromusername, fromnickname, keyword)
 
         if self.accept_friend_config.get("keywords_group_invitation", False):
-            await self.send_welcome_message(fromusername, "🤖 已经邀请你进入群。")
+            await self.send_message.send_welcome_message(self.client, fromusername, "🤖 已经邀请你进入群。")
             return ("group_invite", True, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
 
-        await self.send_welcome_message(fromusername, None)
+        await self.send_message.send_welcome_message(self.client, fromusername, None)
         return ("group_invite", False, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
 
     async def rename_friend(self, fromusername: str, fromnickname: str, keyword: str) -> None:
@@ -87,16 +90,3 @@ class FriendManager:
         new_remark = f"{fromnickname}_{keyword}"
         await self.client.set_friend_remark(fromusername, new_remark)
         logger.info(f"Renamed friend: {fromnickname} -> {new_remark}")
-
-    async def send_welcome_message(self, to_username: str, message: str = None) -> None:
-        """
-        发送欢迎消息给新朋友。
-
-        :param to_username: 收件人用户名
-        """
-        if message is None:
-            message = self.accept_friend_config.get("accept_friend_say_message", "")
-        delay = int(self.accept_friend_config.get("accept_friend_say_message_delay", 0))
-        await asyncio.sleep(delay)
-        logger.info(f"发送: {message}")
-        await self.client.post_text(to_username, message)

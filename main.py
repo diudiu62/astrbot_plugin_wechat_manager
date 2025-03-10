@@ -11,12 +11,15 @@ from astrbot.api import logger
 from astrbot.core.platform.sources.gewechat.gewechat_event import GewechatPlatformEvent
 from .friend_manager import FriendManager
 from .group_manager import GroupManager
+from .send_welcome_message import SendMessage
+
 
 @register("accept_friend", "diudiu62", "好友审核&邀请进群", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
         self.config = config
+        
 
     @command("groupid")
     async def get_group_id(self, event: AstrMessageEvent) -> None:
@@ -32,12 +35,19 @@ class MyPlugin(Star):
 
             friend_manager = self._create_friend_manager(client)
             group_manager = self._create_group_manager(client)
+            is_group = True if "@chatroom" in event.message_obj.raw_message['FromUserName']['string'] else False
 
             message_type = event.message_obj.raw_message["MsgType"]
             if message_type == 37:
+                # 好友申请
                 await self._handle_friend_request(event, friend_manager, group_manager)
                 event.stop_event()
+            elif message_type == 10002 and is_group:
+                # 有邀请入群消息
+                send_message = SendMessage(self.config.get("group_invitation_config", {}))
+                await send_message.send_group_welcome_message(client, event)
             else:
+                # 其他处理
                 await group_manager.handle_group_invitation(event)
 
 
@@ -46,13 +56,13 @@ class MyPlugin(Star):
         return FriendManager(
             client,
             self.config.get("accept_friend_config", {}),
-            self.config.get("group_invitation_config", [])
+            self.config.get("group_invitation_config", {})
         )
 
     def _create_group_manager(self, client) -> GroupManager:
         return GroupManager(
             client,
-            self.config.get("group_invitation_config", [])
+            self.config.get("group_invitation_config", {})
         )
 
     async def _handle_friend_request(self, event: AstrMessageEvent, friend_manager: FriendManager, group_manager: GroupManager) -> None:
