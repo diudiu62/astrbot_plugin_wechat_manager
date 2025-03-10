@@ -11,6 +11,13 @@ from ..gewechat_client import GewechatClient
 
 class SendMessage:
     def __init__(self, base_url, appid, gewechat_token, config: dict):
+        """
+        初始化 FriendManager 实例。
+
+        :param base_url: gewechat地址
+        :param appid: 已登录的appid
+        :param config: 配置信息
+        """
         self.accept_friend_config = config.accept_friend_config
         self.group_invitation_config = config.group_invitation_config
         self.client = GewechatClient(base_url, gewechat_token)

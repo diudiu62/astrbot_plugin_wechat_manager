@@ -4,6 +4,7 @@ Date: 2025-03-04 18:23:22
 LastEditTime: 2025-03-05 11:49:44
 '''
 import asyncio
+import xml.etree.ElementTree as ET
 from astrbot.api import logger
 from .send_welcome_message import SendMessage
 from ..gewechat_client import GewechatClient
@@ -13,9 +14,9 @@ class FriendManager:
         """
         初始化 FriendManager 实例。
 
-        :param client: 机器人客户端
-        :param accept_friend_config: 好友请求接受配置
-        :param group_invitation_config: 群邀请配置
+        :param base_url: gewechat地址
+        :param appid: 已登录的appid
+        :param config: 配置信息
         """
         self.client = GewechatClient(base_url, gewechat_token)
         self.appid = appid
@@ -23,18 +24,20 @@ class FriendManager:
         self.group_invitation_config = config.group_invitation_config
         self.send_message = SendMessage(base_url, self.appid, gewechat_token, config)
 
-    async def accept_friend_request(self, v3: str, v4: str, remark: str, 
-                                     fromnickname: str, fromusername: str) -> tuple:
+    async def accept_friend_request(self, event) -> tuple:
         """
         处理好友请求，检查是否包含关键词并做出相应的操作。
 
-        :param v3: 友元 v3 信息
-        :param v4: 友元 v4 信息
-        :param remark: 申请备注
-        :param fromnickname: 申请者昵称
-        :param fromusername: 申请者用户名
-        :return: ((str, bool, dict) | None) 返回群邀请结果或 None
+        :param event: event元数据
         """
+        content_xml = event.message_obj.raw_message.get("Content", {}).get("string", "")
+        content_xml = ET.fromstring(content_xml)
+        remark = content_xml.attrib.get('content')
+        fromnickname = content_xml.attrib.get('fromnickname')
+        fromusername = content_xml.attrib.get('fromusername')
+        v3 = content_xml.attrib.get('encryptusername')
+        v4 = content_xml.attrib.get('ticket')
+
         logger.info("Incoming friend request: {}".format(remark))
 
         keywords = self.accept_friend_config.get("keywords", [])
@@ -67,14 +70,13 @@ class FriendManager:
         delay = int(self.accept_friend_config.get("accept_friend_delay", 0))
         await asyncio.sleep(delay)
         self.client.add_contacts(self.appid, 3, 3, v3, v4, remark)
-        logger.info(f"Friend added: {fromnickname}")
+        logger.info(f"添加好友: {fromnickname}")
         await asyncio.sleep(2)
 
         if self.accept_friend_config.get("rename", False):
             await self.rename_friend(fromusername, fromnickname, keyword)
 
         if self.accept_friend_config.get("keywords_group_invitation", False):
-            await self.send_message.send_welcome_message(fromusername, "🤖 已经邀请你进入群。")
             return ("group_invite", True, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
 
         await self.send_message.send_welcome_message(fromusername, None)

@@ -3,7 +3,6 @@ Author: diudiu62
 Date: 2025-02-19 15:35:18
 LastEditTime: 2025-03-05 13:53:20
 '''
-import xml.etree.ElementTree as ET
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.event.filter import platform_adapter_type, command, PlatformAdapterType
 from astrbot.api.star import Context, Star, register
@@ -26,12 +25,14 @@ class MyPlugin(Star):
 
     @command("groupid")
     async def get_group_id(self, event: AstrMessageEvent) -> None:
+        '''获取当前群聊groupid'''
         groupid = event.get_group_id().split('@')[0]
         await event.plain_result(f"当前群ID：{groupid}")
         event.stop_event()
 
     @platform_adapter_type(PlatformAdapterType.GEWECHAT)
-    async def accept_friend(self, event: AstrMessageEvent) -> None:
+    async def wechat_manager(self, event: AstrMessageEvent) -> None:
+        '''监听微信消息，响应对应的行为策略'''
         if event.get_platform_name() == "gewechat":
             assert isinstance(event, GewechatPlatformEvent)
             self.gewechat_token = event.client.token
@@ -82,18 +83,11 @@ class MyPlugin(Star):
         )
 
     async def _handle_friend_request(self, event: AstrMessageEvent, friend_manager: FriendManager, group_manager: GroupManager) -> None:
-        content_xml = event.message_obj.raw_message.get("Content", {}).get("string", "")
-
         try:
-            content_xml = ET.fromstring(content_xml)
-            remark = content_xml.attrib.get('content')
-            fromnickname = content_xml.attrib.get('fromnickname')
-            fromusername = content_xml.attrib.get('fromusername')
-            v3 = content_xml.attrib.get('encryptusername')
-            v4 = content_xml.attrib.get('ticket')
-
-            data, result, userinfo = await friend_manager.accept_friend_request(v3, v4, remark, fromnickname, fromusername)
+            data, result, userinfo = await friend_manager.accept_friend_request(event)
             if data == "group_invite" and result:
                 await group_manager.accept_friend_group_invitation(userinfo['keyword'], userinfo['wxid'], userinfo['nickname'])
-        except ET.ParseError as e:
-            logger.error(f"Error parsing friend request content: {e}")
+                send_message = await self._send_message()
+                await send_message.send_welcome_message(userinfo['wxid'], "🤖 已经邀请你进入群。")
+        except Exception as e:
+            logger.error(f"添加好友有异常: {e}")
