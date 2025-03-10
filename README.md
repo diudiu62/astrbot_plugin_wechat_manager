@@ -7,6 +7,10 @@
 
 AstrBot 插件模板
 
+使用 gewechat-python(https://github.com/hanfangyuan4396/gewechat-python) python实现的gewechat api接口，完成微信的相关服务。
+
+# 功能介绍
+
 基于AstrBot的微信（gewechat）好友自动审核\关键字进群管理插件。
 注意：AstrBot版本未整合gewechat相关好友和群接口。本人fork的AstrBot已经整合。
 

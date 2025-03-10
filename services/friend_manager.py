@@ -6,9 +6,10 @@ LastEditTime: 2025-03-05 11:49:44
 import asyncio
 from astrbot.api import logger
 from .send_welcome_message import SendMessage
+from ..gewechat_client import GewechatClient
 
 class FriendManager:
-    def __init__(self, client, accept_friend_config: dict, group_invitation_config: dict):
+    def __init__(self, base_url, appid, gewechat_token, config: dict):
         """
         初始化 FriendManager 实例。
 
@@ -16,10 +17,11 @@ class FriendManager:
         :param accept_friend_config: 好友请求接受配置
         :param group_invitation_config: 群邀请配置
         """
-        self.client = client
-        self.accept_friend_config = accept_friend_config
-        self.group_invitation_config = group_invitation_config
-        self.send_message = SendMessage(group_invitation_config)
+        self.client = GewechatClient(base_url, gewechat_token)
+        self.appid = appid
+        self.accept_friend_config = config.accept_friend_config
+        self.group_invitation_config = config.group_invitation_config
+        self.send_message = SendMessage(base_url, self.appid, gewechat_token, config)
 
     async def accept_friend_request(self, v3: str, v4: str, remark: str, 
                                      fromnickname: str, fromusername: str) -> tuple:
@@ -64,7 +66,7 @@ class FriendManager:
         logger.info(f"{fromnickname} 申请好友触发关键词： ({keyword})")
         delay = int(self.accept_friend_config.get("accept_friend_delay", 0))
         await asyncio.sleep(delay)
-        await self.client.add_contacts(3, 3, v3, v4, remark)
+        self.client.add_contacts(self.appid, 3, 3, v3, v4, remark)
         logger.info(f"Friend added: {fromnickname}")
         await asyncio.sleep(2)
 
@@ -88,5 +90,5 @@ class FriendManager:
         """
         await asyncio.sleep(2)
         new_remark = f"{fromnickname}_{keyword}"
-        await self.client.set_friend_remark(fromusername, new_remark)
+        self.client.set_friend_remark(self.appid, fromusername, new_remark)
         logger.info(f"Renamed friend: {fromnickname} -> {new_remark}")

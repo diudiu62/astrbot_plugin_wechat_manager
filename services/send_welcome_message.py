@@ -1,26 +1,36 @@
+'''
+Author: diudiu62
+Date: 2025-03-10 18:13:18
+LastEditTime: 2025-03-11 12:55:23
+'''
 import asyncio
 from astrbot.api import logger
 import xml.etree.ElementTree as ET
+from ..gewechat_client import GewechatClient
 
 
 class SendMessage:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, base_url, appid, gewechat_token, config: dict):
+        self.accept_friend_config = config.accept_friend_config
+        self.group_invitation_config = config.group_invitation_config
+        self.client = GewechatClient(base_url, gewechat_token)
+        self.appid = appid
+
         
-    async def send_welcome_message(self, client, to_username: str, message: str = None) -> None:
+    async def send_welcome_message(self, to_username: str, message: str = None) -> None:
         """
         发送欢迎消息给新朋友。
 
         :param to_username: 收件人用户名
         """
         if message is None:
-            message = self.config.get("accept_friend_say_message", "")
-        delay = int(self.config.get("accept_friend_say_message_delay", 0))
+            message = self.accept_friend_config.get("accept_friend_say_message", "")
+        delay = int(self.accept_friend_config.get("accept_friend_say_message_delay", 0))
         await asyncio.sleep(delay)
         logger.info(f"发送: {message}")
-        await client.post_text(to_username, message)
+        self.client.post_text(self.appid, to_username, message)
 
-    async def send_group_welcome_message(self, client, event) -> None:
+    async def send_group_welcome_message(self, event) -> None:
         text = event.message_obj.raw_message['Content']['string']
         # notes_bot_join_group = ["邀请你", "invited you", "You've joined", "你通过扫描"]
         # if any(note_bot_join_group in text for note_bot_join_group in notes_bot_join_group):  # 邀请机器人加入群聊
@@ -38,11 +48,11 @@ class SendMessage:
             invited_link = mes_data.find(".//link[@name='names']//nickname")
             invited_nickname = invited_link.text if invited_link is not None else "未知用户"
 
-            welcome_msg = self.config.get("group_welcome_msg", "")
+            welcome_msg = self.group_invitation_config.get("group_welcome_msg", "")
             if welcome_msg:
-                delay = int(self.config.get("group_welcome_msg_delay", 0))
+                delay = int(self.group_invitation_config.get("group_welcome_msg_delay", 0))
                 await asyncio.sleep(delay)
-                await client.post_text(group_id, f'@{invited_nickname} {welcome_msg}', invited_username)
+                self.client.post_text(self.appid, group_id, f'@{invited_nickname} {welcome_msg}', invited_username)
                 logger.info(f"发送入群欢迎消息: {welcome_msg}")
 
             return

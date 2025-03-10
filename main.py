@@ -9,9 +9,9 @@ from astrbot.api.event.filter import platform_adapter_type, command, PlatformAda
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from astrbot.core.platform.sources.gewechat.gewechat_event import GewechatPlatformEvent
-from .friend_manager import FriendManager
-from .group_manager import GroupManager
-from .send_welcome_message import SendMessage
+from .services.friend_manager import FriendManager
+from .services.group_manager import GroupManager
+from .services.send_welcome_message import SendMessage
 
 
 @register("accept_friend", "diudiu62", "好友审核&邀请进群", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
@@ -19,6 +19,9 @@ class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
         self.config = config
+        self.base_url = None
+        self.appid = None
+        self.gewechat_token = None
         
 
     @command("groupid")
@@ -31,10 +34,13 @@ class MyPlugin(Star):
     async def accept_friend(self, event: AstrMessageEvent) -> None:
         if event.get_platform_name() == "gewechat":
             assert isinstance(event, GewechatPlatformEvent)
-            client = event.client
+            self.gewechat_token = event.client.token
+            self.base_url = event.client.base_url
+            self.appid = event.client.appid
 
-            friend_manager = self._create_friend_manager(client)
-            group_manager = self._create_group_manager(client)
+            friend_manager = await self._create_friend_manager()
+            group_manager = await self._create_group_manager()
+            send_message = await self._send_message()
             is_group = True if "@chatroom" in event.message_obj.raw_message['FromUserName']['string'] else False
 
             message_type = event.message_obj.raw_message["MsgType"]
@@ -44,25 +50,35 @@ class MyPlugin(Star):
                 event.stop_event()
             elif message_type == 10002 and is_group:
                 # 有邀请入群消息
-                send_message = SendMessage(self.config.get("group_invitation_config", {}))
-                await send_message.send_group_welcome_message(client, event)
+                await send_message.send_group_welcome_message(event)
             else:
                 # 其他处理
                 await group_manager.handle_group_invitation(event)
 
 
 
-    def _create_friend_manager(self, client) -> FriendManager:
+    async def _create_friend_manager(self) -> FriendManager:
         return FriendManager(
-            client,
-            self.config.get("accept_friend_config", {}),
-            self.config.get("group_invitation_config", {})
+            self.base_url,
+            self.appid,
+            self.gewechat_token,
+            self.config
         )
 
-    def _create_group_manager(self, client) -> GroupManager:
+    async def _create_group_manager(self) -> GroupManager:
         return GroupManager(
-            client,
-            self.config.get("group_invitation_config", {})
+            self.base_url,
+            self.appid,
+            self.gewechat_token,
+            self.config
+        )
+    
+    async def _send_message(self) -> SendMessage:
+        return SendMessage(
+            self.base_url,
+            self.appid,
+            self.gewechat_token,
+            self.config
         )
 
     async def _handle_friend_request(self, event: AstrMessageEvent, friend_manager: FriendManager, group_manager: GroupManager) -> None:
