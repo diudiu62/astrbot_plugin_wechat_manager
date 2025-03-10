@@ -14,7 +14,7 @@ from .services.group_manager import GroupManager
 from .services.send_welcome_message import SendMessage
 
 
-@register("accept_friend", "diudiu62", "好友审核&邀请进群", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_accept_friend.git")
+@register("wechat_manager", "diudiu62", "微信社交管理", "1.0.0", "https://github.com/diudiu62/astrbot_plugin_wechat_manager.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
