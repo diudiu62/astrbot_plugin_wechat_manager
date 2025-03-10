@@ -74,10 +74,10 @@ class FriendManager:
             await self.rename_friend(fromusername, fromnickname, keyword)
 
         if self.accept_friend_config.get("keywords_group_invitation", False):
-            await self.send_message.send_welcome_message(self.client, fromusername, "🤖 已经邀请你进入群。")
+            await self.send_message.send_welcome_message(fromusername, "🤖 已经邀请你进入群。")
             return ("group_invite", True, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
 
-        await self.send_message.send_welcome_message(self.client, fromusername, None)
+        await self.send_message.send_welcome_message(fromusername, None)
         return ("group_invite", False, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
 
     async def rename_friend(self, fromusername: str, fromnickname: str, keyword: str) -> None:
