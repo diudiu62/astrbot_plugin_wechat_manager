@@ -61,7 +61,7 @@ class SendMessage:
                 await asyncio.sleep(delay)
                 self.client.post_text(self.appid, group_id, f'@{invited_nickname} {welcome_msg}', invited_username)
                 logger.info(f"发送入群欢迎消息: {welcome_msg}")
-
+                await self.send_welcome_message(invited_username, "🤖 已经邀请你进入群。")
             return
 
         except ET.ParseError as e:
