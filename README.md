@@ -5,14 +5,15 @@
 -->
 # 微信行为管理
 
-使用 [gewechat-python](https://github.com/hanfangyuan4396/gewechat-python) \n
-实现的gewechat api接口，完成微信的相关服务。
+<p>使用 [gewechat-python](https://github.com/hanfangyuan4396/gewechat-python) </p>
+<p>实现的gewechat api接口，完成微信的相关服务。</p>
 
 # 功能介绍
 
 基于AstrBot的微信（gewechat）行为管理，如好友自动审核\关键字进群管理。
-![alt text](img\image.png) \n
-![alt text](img\image-1.png)
+<img src="img/image.png" />
+
+<img src="img/image-1.png" />
 
 # 支持
 
