@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-03-10 18:13:18
-LastEditTime: 2025-03-12 14:51:01
+LastEditTime: 2025-03-12 17:14:35
 '''
 import asyncio
 from astrbot.api import logger
@@ -73,5 +73,6 @@ class SendMessage(BaseManager):
 
             except ET.ParseError as e:
                 logger.error(f"[gewechat] Failed to parse group join XML: {e}")
+                logger.error(text)
                 # Fall back to regular text handling
                 pass

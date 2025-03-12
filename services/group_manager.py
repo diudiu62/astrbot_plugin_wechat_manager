@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-03-04 18:23:07
-LastEditTime: 2025-03-12 14:50:40
+LastEditTime: 2025-03-12 17:25:14
 '''
 from astrbot.api import logger
 import asyncio
@@ -13,6 +13,8 @@ class GroupManager(BaseManager):
 
     async def handle_group_invitation(self, event: Any) -> None:
         '''关键字邀请进群'''
+        if not event.is_private_chat():
+            return None, None
         if self.group_invitation_config.get("switch", False):
             keys_values = self.parse_keywords(
                 self.group_invitation_config["keywords"])
