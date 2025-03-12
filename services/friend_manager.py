@@ -1,28 +1,16 @@
 '''
 Author: diudiu62
 Date: 2025-03-04 18:23:22
-LastEditTime: 2025-03-05 11:49:44
+LastEditTime: 2025-03-12 14:51:11
 '''
 import asyncio
 import xml.etree.ElementTree as ET
 from astrbot.api import logger
-from .send_welcome_message import SendMessage
-from ..gewechat_client import GewechatClient
+from .base_manager import BaseManager
+from .group_manager import GroupManager
 
-class FriendManager:
-    def __init__(self, base_url, appid, gewechat_token, config: dict):
-        """
-        初始化 FriendManager 实例。
 
-        :param base_url: gewechat地址
-        :param appid: 已登录的appid
-        :param config: 配置信息
-        """
-        self.client = GewechatClient(base_url, gewechat_token)
-        self.appid = appid
-        self.accept_friend_config = config.accept_friend_config
-        self.group_invitation_config = config.group_invitation_config
-        self.send_message = SendMessage(base_url, self.appid, gewechat_token, config)
+class FriendManager(BaseManager):
 
     async def accept_friend_request(self, event) -> tuple:
         """
@@ -30,7 +18,8 @@ class FriendManager:
 
         :param event: event元数据
         """
-        content_xml = event.message_obj.raw_message.get("Content", {}).get("string", "")
+        content_xml = event.message_obj.raw_message.get(
+            "Content", {}).get("string", "")
         content_xml = ET.fromstring(content_xml)
         remark = content_xml.attrib.get('content')
         fromnickname = content_xml.attrib.get('fromnickname')
@@ -38,23 +27,24 @@ class FriendManager:
         v3 = content_xml.attrib.get('encryptusername')
         v4 = content_xml.attrib.get('ticket')
 
-        logger.info("Incoming friend request: {}".format(remark))
+        logger.info("好友申请备注: {}".format(remark))
 
         keywords = self.accept_friend_config.get("keywords", [])
         if not keywords:
             logger.warning("没有设置关键词，无法审核好友。")
-            return None, None, None 
+            return None, None
 
         for keyword in keywords:
             if keyword in remark:
-                return await self.process_friend_request(v3, v4, remark, fromnickname, fromusername, keyword)
+                result = await self.process_friend_request(v3, v4, remark, fromnickname, fromusername, keyword)
+                return fromusername, result
 
         logger.info(f"{fromnickname} ：好友申请待审核.")
-        return None, False, {} 
+        return None, None
 
-    async def process_friend_request(self, v3: str, v4: str, remark: str, 
-                                      fromnickname: str, fromusername: str, 
-                                      keyword: str) -> tuple:
+    async def process_friend_request(self, v3: str, v4: str, remark: str,
+                                     fromnickname: str, fromusername: str,
+                                     keyword: str) -> tuple:
         """
         处理好友请求的具体逻辑，包括添加好友、重命名及发送欢迎消息。
 
@@ -66,21 +56,28 @@ class FriendManager:
         :param keyword: 触发的关键词
         :return: ((str, bool, dict) | None) 返回群邀请结果或 None
         """
-        logger.info(f"{fromnickname} 申请好友触发关键词： ({keyword})")
-        delay = int(self.accept_friend_config.get("accept_friend_delay", 0))
-        await asyncio.sleep(delay)
-        self.client.add_contacts(self.appid, 3, 3, v3, v4, remark)
-        logger.info(f"添加好友: {fromnickname}")
-        await asyncio.sleep(2)
+        result = ""
+        try:
+            logger.info(f"{fromnickname} 申请好友触发关键词： ({keyword})")
+            delay = int(self.accept_friend_config.get(
+                "accept_friend_delay", 0))
+            await asyncio.sleep(delay)
+            self.client.add_contacts(self.appid, 3, 3, v3, v4, remark)
+            logger.info(f"添加好友: {fromnickname}")
+            await asyncio.sleep(2)
 
-        if self.accept_friend_config.get("rename", False):
-            await self.rename_friend(fromusername, fromnickname, keyword)
+            if self.accept_friend_config.get("rename", False):
+                # 备注好友
+                await self.rename_friend(fromusername, fromnickname, keyword)
 
-        if self.accept_friend_config.get("keywords_group_invitation", False):
-            return ("group_invite", True, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
-
-        await self.send_message.send_welcome_message(fromusername, None)
-        return ("group_invite", False, {"keyword": keyword, "wxid": fromusername, "nickname": fromnickname})
+            if self.accept_friend_config.get("keywords_group_invitation", False):
+                #  邀请进群
+                group_manager = GroupManager(
+                    self.base_url, self.appid, self.gewechat_token, self.config)
+                result = await group_manager.accept_friend_group_invitation(keyword, fromusername, fromnickname)
+            return result
+        except ExceptionGroup as e:
+            return f"处理添加好友有错误：{e}"
 
     async def rename_friend(self, fromusername: str, fromnickname: str, keyword: str) -> None:
         """
@@ -93,4 +90,16 @@ class FriendManager:
         await asyncio.sleep(2)
         new_remark = f"{fromnickname}_{keyword}"
         self.client.set_friend_remark(self.appid, fromusername, new_remark)
-        logger.info(f"Renamed friend: {fromnickname} -> {new_remark}")
+        logger.info(f"修改好友备注: {fromnickname} -> {new_remark}")
+
+    async def search_friend(self, contactsinfo: str) -> None:
+        """
+        搜索好友。
+
+        :param contactsinfo: 搜索的联系人信息，微信号、手机号...
+        """
+        resault = self.client.search_contacts(self.appid, contactsinfo)
+        if resault['ret'] == 200:
+            return True
+        else:
+            return False
