@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-03-10 18:13:18
-LastEditTime: 2025-03-14 10:18:35
+:param LastEditTime: 2025-03-14 16:34:59
 '''
 import asyncio
 from astrbot.api import logger
@@ -40,7 +40,7 @@ class SendMessage(BaseManager):
             mes_data = ET.fromstring(xml_content[1])
 
             sysmsgtemplate = mes_data.find('.//sysmsgtemplate')
-            if sysmsgtemplate is not None:
+            if sysmsgtemplate is None:
                 # 非群系统消息
                 return
             invited_link = mes_data.find(
