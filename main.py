@@ -13,7 +13,7 @@ from .services.group_manager import GroupManager
 from .services.send_welcome_message import SendMessage
 
 
-@register("wechat_manager", "diudiu62", "微信社交管理", "1.1.4", "https://github.com/diudiu62/astrbot_plugin_wechat_manager.git")
+@register("wechat_manager", "diudiu62", "微信社交管理", "1.1.5", "https://github.com/diudiu62/astrbot_plugin_wechat_manager.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)

@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-03-04 18:23:22
-LastEditTime: 2025-03-12 14:51:11
+:LastEditTime: 2025-03-18
 '''
 import asyncio
 import xml.etree.ElementTree as ET
@@ -76,7 +76,9 @@ class FriendManager(BaseManager):
                     self.base_url, self.appid, self.gewechat_token, self.config)
                 result = await group_manager.accept_friend_group_invitation(keyword, fromusername, fromnickname)
             return result
-        except ExceptionGroup as e:
+        except Exception as e:
+            logger.info(f"v3：{v3}")
+            logger.info(f"v4：{v4}")
             return f"处理添加好友有错误：{e}"
 
     async def rename_friend(self, fromusername: str, fromnickname: str, keyword: str) -> None:
