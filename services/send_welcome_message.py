@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-03-10 18:13:18
-:param LastEditTime: 2025-03-14 16:34:59
+:LastEditTime: 2025-03-18
 '''
 import asyncio
 from astrbot.api import logger
@@ -28,13 +28,18 @@ class SendMessage(BaseManager):
 
     async def send_group_welcome_message(self, event) -> None:
         text = event.message_obj.raw_message['Content']['string']
-        # notes_bot_join_group = ["邀请你", "invited you", "You've joined", "你通过扫描"]
-        # if any(note_bot_join_group in text for note_bot_join_group in notes_bot_join_group):  # 邀请机器人加入群聊
-        #     logger.debug("不处理机器人加入群聊消息。")
-        #     pass
+        notes_join_group = ["加入群聊", "加入了群聊", "invited", "joined", "移出了群聊"]
+        if not any(note in text for note in notes_join_group):
+            logger.info("不是要处理的好友入群信息。")
+            return
+        notes_bot_join_group = ["邀请你", "invited you", "You've joined", "你通过扫描"]
+        if any(note_bot_join_group in text for note_bot_join_group in notes_bot_join_group):  # 邀请机器人加入群聊
+            logger.info("不处理机器人加入群聊消息。")
+            return
 
         try:
             # 解析xml
+            logger.info(text)
             xml_content = text.split(':\n', 1) if ':\n' in text else text
             group_id = xml_content[0]
             mes_data = ET.fromstring(xml_content[1])
@@ -42,6 +47,7 @@ class SendMessage(BaseManager):
             sysmsgtemplate = mes_data.find('.//sysmsgtemplate')
             if sysmsgtemplate is None:
                 # 非群系统消息
+                logger.info("未找到 sysmsgtemplate 标签")
                 return
             invited_link = mes_data.find(
                 ".//link[@name='names']//username")
@@ -74,7 +80,6 @@ class SendMessage(BaseManager):
                     logger.info(f"发送入群欢迎消息: {welcome_msg}")
 
         except ET.ParseError as e:
-            logger.error(f"[gewechat] Failed to parse group join XML: {e}")
-            logger.error(text)
+            logger.info(f"解析入群高高消息异常：{e}")
             # Fall back to regular text handling
-            pass
+            return

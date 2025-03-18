@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-19 15:35:18
-LastEditTime: 2025-03-12 17:25:46
+:LastEditTime: 2025-03-18
 '''
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.event.filter import platform_adapter_type, command, PlatformAdapterType
@@ -13,7 +13,7 @@ from .services.group_manager import GroupManager
 from .services.send_welcome_message import SendMessage
 
 
-@register("wechat_manager", "diudiu62", "微信社交管理", "1.1.1", "https://github.com/diudiu62/astrbot_plugin_wechat_manager.git")
+@register("wechat_manager", "diudiu62", "微信社交管理", "1.1.4", "https://github.com/diudiu62/astrbot_plugin_wechat_manager.git")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
@@ -57,7 +57,7 @@ class MyPlugin(Star):
             case _:
                 # 其他处理
                 wxid, message = await group_manager.handle_group_invitation(event)
-        if wxid and event.is_private_chat():
+        if wxid != "weixin" and wxid and event.is_private_chat():
             # 好友类型用户才可以发私信
             await message_manager.send_welcome_message(wxid, message)
 
