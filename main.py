@@ -23,11 +23,15 @@ class MyPlugin(Star):
         self.gewechat_token = None
 
     @command("groupid")
-    async def get_group_id(self, event: AstrMessageEvent) -> None:
+    async def get_group_id(self, event: AstrMessageEvent):
         '''获取当前群聊groupid'''
+        if event.get_platform_name() != "gewechat":
+            return
         groupid = event.get_group_id().split('@')[0]
-        yield event.plain_result(f"当前群ID：{groupid}")
-        event.stop_event()
+        if groupid == "":
+            yield event.plain_result(f"不支持私聊，请在需要启用的群聊发送指令。")
+        else:
+            yield event.plain_result(f"当前群ID：{groupid}")
 
     @platform_adapter_type(PlatformAdapterType.GEWECHAT)
     async def wechat_manager(self, event: AstrMessageEvent) -> None:
