@@ -1,7 +1,7 @@
 '''
 Author: diudiu62
 Date: 2025-02-19 15:35:18
-:LastEditTime: 2025-03-18
+:LastEditTime: 2025-03-20
 '''
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.event.filter import platform_adapter_type, command, PlatformAdapterType
@@ -26,7 +26,7 @@ class MyPlugin(Star):
     async def get_group_id(self, event: AstrMessageEvent) -> None:
         '''获取当前群聊groupid'''
         groupid = event.get_group_id().split('@')[0]
-        await event.plain_result(f"当前群ID：{groupid}")
+        yield event.plain_result(f"当前群ID：{groupid}")
         event.stop_event()
 
     @platform_adapter_type(PlatformAdapterType.GEWECHAT)
