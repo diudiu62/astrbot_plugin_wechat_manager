@@ -4,9 +4,9 @@ from .api.download_api import DownloadApi
 from .api.favor_api import FavorApi
 from .api.group_api import GroupApi
 from .api.label_api import LabelApi
-from .api.login_api import LoginApi
 from .api.message_api import MessageApi
 from .api.personal_api import PersonalApi
+
 
 class GewechatClient:
     """
@@ -30,13 +30,13 @@ class GewechatClient:
 
     注意: 在使用任何方法之前，请确保你已经正确初始化了客户端，并且有有效的 base_url 和 token。
     """
+
     def __init__(self, base_url, token):
         self._contact_api = ContactApi(base_url, token)
         self._download_api = DownloadApi(base_url, token)
         self._favor_api = FavorApi(base_url, token)
         self._group_api = GroupApi(base_url, token)
         self._label_api = LabelApi(base_url, token)
-        self._login_api = LoginApi(base_url, token)
         self._message_api = MessageApi(base_url, token)
         self._personal_api = PersonalApi(base_url, token)
 
@@ -83,7 +83,7 @@ class GewechatClient:
     def sync_favor(self, app_id, sync_key):
         """同步收藏夹"""
         return self._favor_api.sync(app_id, sync_key)
-    
+
     def get_favor_content(self, app_id, fav_id):
         """获取收藏夹"""
         return self._favor_api.get_content(app_id, fav_id)
@@ -243,44 +243,8 @@ class GewechatClient:
         """修改头像"""
         return self._personal_api.update_head_img(app_id, head_img_url)
 
-    # Login API methods
-    def login(self, app_id):
-        """登录"""
-        return self._login_api.login(app_id)
-
-    def get_token(self):
-        """获取tokenId"""
-        return self._login_api.get_token()
-
-    def set_callback(self, token, callback_url):
-        """设置微信消息的回调地址"""
-        return self._login_api.set_callback(token, callback_url)
-
-    def get_qr(self, app_id):
-        """获取登录二维码"""
-        return self._login_api.get_qr(app_id)
-
-    def check_qr(self, app_id, uuid, captch_code):
-        """确认登陆"""
-        return self._login_api.check_qr(app_id, uuid, captch_code)
-
-    def log_out(self, app_id):
-        """退出微信"""
-        return self._login_api.log_out(app_id)
-
-    def dialog_login(self, app_id):
-        """弹框登录"""
-        return self._login_api.dialog_login(app_id)
-
-    def check_online(self, app_id):
-        """检查是否在线"""
-        return self._login_api.check_online(app_id)
-
-    def logout(self, app_id):
-        """退出"""
-        return self._login_api.logout(app_id)
-
     # Message API methods
+
     def post_text(self, app_id, to_wxid, content, ats: str = ""):
         """发送文字消息"""
         return self._message_api.post_text(app_id, to_wxid, content, ats)
